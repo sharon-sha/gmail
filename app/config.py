@@ -1,24 +1,14 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
+from sqlalchemy.engine import make_url
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-def _normalize_database_url(url: str) -> str:
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql+psycopg2://", 1)
-    elif url.startswith("postgresql://") and "+psycopg2" not in url:
-        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
-
-    if "sslmode=" not in url and ("render.com" in url or "neon.tech" in url):
-        url += "&sslmode=require" if "?" in url else "?sslmode=require"
-
-    return url
 
 
 def _resolve_app_url() -> str:
@@ -27,6 +17,85 @@ def _resolve_app_url() -> str:
         if value:
             return value
     return "http://localhost:8000"
+
+
+def _add_sslmode(url: str) -> str:
+    host = make_url(url).host or ""
+    if "sslmode=" in url:
+        return url
+    if "render.com" in url or "dpg-" in host or "neon.tech" in url:
+        return f"{url}&sslmode=require" if "?" in url else f"{url}?sslmode=require"
+    return url
+
+
+def _build_database_url_from_parts() -> str | None:
+    host = (
+        os.getenv("POSTGRES_HOST", "")
+        or os.getenv("PGHOST", "")
+        or os.getenv("DATABASE_HOST", "")
+    ).strip()
+    user = (
+        os.getenv("POSTGRES_USER", "")
+        or os.getenv("PGUSER", "")
+        or os.getenv("DATABASE_USER", "")
+    ).strip()
+    password = (
+        os.getenv("POSTGRES_PASSWORD", "")
+        or os.getenv("PGPASSWORD", "")
+        or os.getenv("DATABASE_PASSWORD", "")
+    ).strip()
+    database = (
+        os.getenv("POSTGRES_DB", "")
+        or os.getenv("PGDATABASE", "")
+        or os.getenv("DATABASE_NAME", "")
+        or "mailbrief"
+    ).strip()
+    port = (
+        os.getenv("POSTGRES_PORT", "")
+        or os.getenv("PGPORT", "")
+        or os.getenv("DATABASE_PORT", "")
+        or "5432"
+    ).strip()
+
+    if not host or not user or not password:
+        return None
+
+    return (
+        f"postgresql+psycopg2://{quote_plus(user)}:{quote_plus(password)}"
+        f"@{host}:{port}/{quote_plus(database)}?sslmode=require"
+    )
+
+
+def _normalize_database_url(url: str) -> str:
+    cleaned = url.strip().strip('"').strip("'")
+    if not cleaned:
+        raise ValueError("DATABASE_URL is empty")
+
+    if cleaned.startswith("postgres://"):
+        cleaned = cleaned.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif cleaned.startswith("postgresql://") and "+psycopg2" not in cleaned:
+        cleaned = cleaned.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+    make_url(cleaned)
+    return _add_sslmode(cleaned)
+
+
+def _build_database_url() -> str:
+    parts_url = _build_database_url_from_parts()
+    if parts_url:
+        return parts_url
+
+    explicit_url = os.getenv("DATABASE_URL", "").strip().strip('"').strip("'")
+    if explicit_url:
+        try:
+            return _normalize_database_url(explicit_url)
+        except Exception as exc:
+            raise ValueError(
+                "DATABASE_URL is invalid. Link PostgreSQL in Render or set "
+                "POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB."
+            ) from exc
+
+    return f"sqlite:///{BASE_DIR / 'mailbrief.db'}"
 
 
 @dataclass(frozen=True)
@@ -69,28 +138,4 @@ def get_app_settings() -> AppSettings:
         ),
         poll_interval_seconds=max(15, int(os.getenv("POLL_INTERVAL_SECONDS", "60"))),
         free_plan_monthly_limit=int(os.getenv("FREE_PLAN_MONTHLY_LIMIT", "100")),
-    )
-
-
-def _build_database_url() -> str:
-    explicit_url = os.getenv("DATABASE_URL", "").strip()
-    if explicit_url:
-        return _normalize_database_url(explicit_url)
-
-    postgres_host = os.getenv("POSTGRES_HOST", "").strip()
-    if not postgres_host:
-        return f"sqlite:///{BASE_DIR / 'mailbrief.db'}"
-
-    postgres_user = os.getenv("POSTGRES_USER", "mailbrief").strip()
-    postgres_password = os.getenv("POSTGRES_PASSWORD", "").strip()
-    postgres_host = os.getenv("POSTGRES_HOST", "localhost").strip()
-    postgres_port = os.getenv("POSTGRES_PORT", "5432").strip()
-    postgres_db = os.getenv("POSTGRES_DB", "mailbrief").strip()
-
-    if not postgres_password:
-        raise ValueError("POSTGRES_PASSWORD is required when using PostgreSQL")
-
-    return (
-        f"postgresql+psycopg2://{postgres_user}:{postgres_password}"
-        f"@{postgres_host}:{postgres_port}/{postgres_db}"
     )

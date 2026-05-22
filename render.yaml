@@ -22,10 +22,26 @@ services:
         value: "60"
       - key: FREE_PLAN_MONTHLY_LIMIT
         value: "100"
-      - key: DATABASE_URL
+      - key: POSTGRES_HOST
         fromDatabase:
           name: mailbrief-db
-          property: connectionString
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: mailbrief-db
+          property: port
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: mailbrief-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: mailbrief-db
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: mailbrief-db
+          property: database
 
 databases:
   - name: mailbrief-db
