@@ -45,11 +45,30 @@ app.include_router(pages.router)
 app.include_router(gmail.router)
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    if exc.status_code == 401:
-        accept = request.headers.get("accept", "")
-        wants_html = "text/html" in accept or request.url.path.startswith("/dashboard")
-        if wants_html:
-            return RedirectResponse("/login?notice=Please+log+in+to+continue", status_code=303)
+    path = request.url.path
+    accept = request.headers.get("accept", "")
+    wants_html = "text/html" in accept or not path.startswith("/api")
+
+    if exc.status_code == 401 and wants_html:
+        return RedirectResponse("/login?notice=Please+log+in+to+continue", status_code=303)
+
+    if wants_html and exc.status_code >= 400:
+        return pages.templates.TemplateResponse(
+            request,
+            "error.html",
+            {
+                "app_name": settings.app_name,
+                "status_code": exc.status_code,
+                "message": exc.detail or "Something went wrong",
+            },
+            status_code=exc.status_code,
+        )
+
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})

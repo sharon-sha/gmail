@@ -9,6 +9,19 @@ from sqlalchemy.engine import make_url
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOCAL_DB_HOSTS = {"localhost", "127.0.0.1", "::1"}
+
+
+def _is_production() -> bool:
+    return os.getenv("ENV") == "production" or os.getenv("RENDER", "").lower() == "true"
+
+
+def _validate_production_host(host: str) -> None:
+    if _is_production() and host in LOCAL_DB_HOSTS:
+        raise ValueError(
+            "POSTGRES_HOST is set to localhost on Render. Remove local .env values from "
+            "Render Environment and link your mailbrief-db PostgreSQL instance instead."
+        )
 
 
 def _resolve_app_url() -> str:
@@ -60,6 +73,8 @@ def _build_database_url_from_parts() -> str | None:
     if not host or not user or not password:
         return None
 
+    _validate_production_host(host)
+
     return (
         f"postgresql+psycopg2://{quote_plus(user)}:{quote_plus(password)}"
         f"@{host}:{port}/{quote_plus(database)}?sslmode=require"
@@ -81,19 +96,28 @@ def _normalize_database_url(url: str) -> str:
 
 
 def _build_database_url() -> str:
+    explicit_url = os.getenv("DATABASE_URL", "").strip().strip('"').strip("'")
+    if explicit_url:
+        try:
+            url = _normalize_database_url(explicit_url)
+            host = make_url(url).host or ""
+            if not _is_production() or host not in LOCAL_DB_HOSTS:
+                return url
+        except Exception as exc:
+            if _is_production():
+                raise ValueError(
+                    "DATABASE_URL is invalid on Render. Link mailbrief-db or set POSTGRES_* vars."
+                ) from exc
+
     parts_url = _build_database_url_from_parts()
     if parts_url:
         return parts_url
 
-    explicit_url = os.getenv("DATABASE_URL", "").strip().strip('"').strip("'")
-    if explicit_url:
-        try:
-            return _normalize_database_url(explicit_url)
-        except Exception as exc:
-            raise ValueError(
-                "DATABASE_URL is invalid. Link PostgreSQL in Render or set "
-                "POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB."
-            ) from exc
+    if _is_production():
+        raise ValueError(
+            "PostgreSQL is not linked on Render. Add POSTGRES_HOST, POSTGRES_USER, "
+            "POSTGRES_PASSWORD, and POSTGRES_DB from mailbrief-db in Environment."
+        )
 
     return f"sqlite:///{BASE_DIR / 'mailbrief.db'}"
 
