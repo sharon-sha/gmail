@@ -92,6 +92,10 @@ def register(
     token = create_access_token(user.id, user.email)
     response = RedirectResponse("/dashboard", status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie("access_token", token, **_cookie_options())
+    return response
+
+
+@router.post("/login")
 def login(
     email: str = Form(...),
     password: str = Form(...),
