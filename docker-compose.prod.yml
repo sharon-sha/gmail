@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mailbrief
+      POSTGRES_USER: mailbrief
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mailbrief -d mailbrief"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://mailbrief:${POSTGRES_PASSWORD}@db:5432/mailbrief
+      APP_URL: ${APP_URL}
+      GMAIL_REDIRECT_URI: ${APP_URL}/auth/gmail/callback
+    volumes:
+      - ./gmailautomation.json:/app/gmailautomation.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python scripts/init_db.py &&
+             gunicorn app.main:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 --workers 2 --timeout 120"
+
+volumes:
+  postgres_data:

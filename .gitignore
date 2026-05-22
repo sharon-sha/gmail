@@ -1,0 +1,12 @@
+.env
+.env.production
+credentials.json
+gmailautomation.json
+token.json
+processed_messages.json
+mailbrief.db
+*.db
+__pycache__/
+*.pyc
+.venv/
+venv/

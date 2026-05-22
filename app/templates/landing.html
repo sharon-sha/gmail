@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} — AI email summaries to Telegram{% endblock %}
+{% block nav %}
+  <a href="/login">Log in</a>
+  <a class="btn btn-primary" href="/register">Start free</a>
+{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <span class="badge">SaaS for busy inboxes</span>
+    <h1>Turn Gmail into Telegram summaries.</h1>
+    <p>
+      Connect Gmail, add your Telegram chat ID, and let AI send you concise
+      summaries of every new email — automatically.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/register">Create free account</a>
+      <a class="btn btn-secondary" href="/login">Log in</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div class="mock-line"></div>
+    <div class="mock-line short"></div>
+    <div class="mock-summary">
+      <strong>Summary</strong>
+      <p>NYT sale ends tonight: $1/week offer for the first year on digital subscriptions.</p>
+    </div>
+    <div class="mock-tag">Sent to Telegram</div>
+  </div>
+</section>
+
+<section class="features">
+  <article class="feature">
+    <h3>Gmail connect</h3>
+    <p>Secure Google OAuth per user. No passwords stored.</p>
+  </article>
+  <article class="feature">
+    <h3>Groq AI summaries</h3>
+    <p>Fast LLM summaries powered by Groq.</p>
+  </article>
+  <article class="feature">
+    <h3>Telegram delivery</h3>
+    <p>Bring your own bot from @BotFather — summaries go to your private chat.</p>
+  </article>
+</section>
+
+<section class="pricing">
+  <h2>Simple pricing</h2>
+  <div class="price-card">
+    <h3>Free</h3>
+    <p class="price">$0<span>/month</span></p>
+    <ul>
+      <li>100 summaries / month</li>
+      <li>1 Gmail account</li>
+      <li>Telegram notifications</li>
+    </ul>
+    <a class="btn btn-primary" href="/register">Get started</a>
+  </div>
+</section>
+{% endblock %}

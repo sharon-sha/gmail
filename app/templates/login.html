@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Log in — {{ app_name }}{% endblock %}
+{% block nav %}
+  <a href="/register">Create account</a>
+{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <h1>Welcome back</h1>
+  <p class="muted">Log in to manage your email automation.</p>
+  {% if notice %}
+  <div class="alert alert-success">{{ notice }}</div>
+  {% endif %}
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="/login" class="stack">
+    <label>Email<input type="email" name="email" required></label>
+    <label>Password<input type="password" name="password" required></label>
+    <button class="btn btn-primary" type="submit">Log in</button>
+  </form>
+</section>
+{% endblock %}

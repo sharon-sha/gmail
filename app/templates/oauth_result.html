@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Gmail OAuth — {{ app_name }}{% endblock %}
+{% block content %}
+<section class="auth-card">
+  {% if success %}
+    <h1>Gmail connected</h1>
+    <p>{{ message }}</p>
+    <a class="btn btn-primary" href="/dashboard">Back to dashboard</a>
+  {% else %}
+    <h1>Connection failed</h1>
+    <p class="alert alert-error">{{ message }}</p>
+    <a class="btn btn-secondary" href="/dashboard">Back to dashboard</a>
+  {% endif %}
+</section>
+{% endblock %}

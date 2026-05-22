@@ -1,0 +1,123 @@
+{
+  "name": "Gmail Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e3949917-24ce-4c31-ba44-10599107b5a0",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N6QXe1kZxP4eTvqz",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Summarize this email:\n{{ $json.Subject }}\n\n{{ $json.snippet }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "cadb310a-e6c3-4a26-9d9b-568160f8b81c",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "u8y5yZR5AlyGTVaf",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6862705647",
+        "text": "={{ $json.output[0].content[0].text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "32e35e7a-aa5b-4976-b61b-d8acfa328534",
+      "name": "Send a text message",
+      "webhookId": "a094829a-938a-405b-8d33-b283589a9d25",
+      "credentials": {
+        "telegramApi": {
+          "id": "lgifcDaar3QyPTNv",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3de6111d-05cc-4631-8b6a-ad6d935458e8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5be4342d8216e7d282cbc08f0e45a3a24e073a2dbfdf5437a14c330ef437fa6c"
+  },
+  "id": "KldU8BcPS4vRSRpz",
+  "tags": []
+}

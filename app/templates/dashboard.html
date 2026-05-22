@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ app_name }}{% endblock %}
+{% block nav %}
+  <span class="muted">{{ user.email }}</span>
+  <a href="/logout">Log out</a>
+{% endblock %}
+{% block content %}
+<section class="dashboard-header">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">Manage your Gmail → Telegram automation.</p>
+  </div>
+  <div class="plan-pill">{{ user.plan|capitalize }} plan</div>
+</section>
+
+<section class="stats">
+  <article class="stat">
+    <span>Monthly usage</span>
+    <strong>{{ monthly_usage }} / {{ monthly_limit }}</strong>
+  </article>
+  <article class="stat">
+    <span>Gmail</span>
+    <strong>{% if integration.gmail_email %}{{ integration.gmail_email }}{% else %}Not connected{% endif %}</strong>
+  </article>
+  <article class="stat">
+    <span>Telegram bot</span>
+    <strong>{% if integration.telegram_bot_username %}@{{ integration.telegram_bot_username }}{% else %}Not connected{% endif %}</strong>
+  </article>
+  <article class="stat">
+    <span>Automation</span>
+    <strong>{% if integration.automation_enabled %}Running{% else %}Paused{% endif %}</strong>
+  </article>
+  <article class="stat">
+    <span>Last checked</span>
+    <strong>{% if integration.last_checked_at %}{{ integration.last_checked_at.strftime('%H:%M UTC') }}{% else %}Never{% endif %}</strong>
+  </article>
+</section>
+
+{% if flash_error %}
+<div class="alert alert-error">{{ flash_error }}</div>
+{% elif flash_success %}
+<div class="alert alert-success">Settings saved.</div>
+{% elif integration.last_error %}
+<div class="alert alert-error">{{ integration.last_error }}</div>
+{% endif %}
+
+<section class="grid-2">
+  <article class="panel">
+    <h2>Connections</h2>
+    <div class="connection-row">
+      <div>
+        <strong>Gmail</strong>
+        <p class="muted">{% if integration.gmail_email %}Connected as {{ integration.gmail_email }}{% else %}Connect your inbox{% endif %}</p>
+      </div>
+      <a class="btn btn-secondary" href="/auth/gmail/connect">{% if integration.gmail_email %}Reconnect{% else %}Connect Gmail{% endif %}</a>
+    </div>
+    <div class="connection-row">
+      <div>
+        <strong>Telegram bot</strong>
+        <p class="muted">
+          Create a bot with <a href="https://t.me/BotFather" target="_blank">@BotFather</a>,
+          paste your bot token below, then message your bot to get your chat ID.
+        </p>
+        {% if integration.telegram_bot_username %}
+        <p class="muted">
+          Active bot:
+          <a href="https://t.me/{{ integration.telegram_bot_username }}" target="_blank">@{{ integration.telegram_bot_username }}</a>
+          {% if masked_bot_token %}<span>(token {{ masked_bot_token }})</span>{% endif %}
+        </p>
+        {% endif %}
+        <p class="muted"><strong>To switch bots:</strong> paste the new bot token below and click Save. Leaving the token field empty keeps the current bot.</p>
+      </div>
+    </div>
+    <form method="post" action="/dashboard/settings" class="stack">
+      <label>
+        Telegram bot token
+        <input
+          type="password"
+          name="telegram_bot_token"
+          value=""
+          placeholder="{% if integration.telegram_bot_token %}Saved — enter new token to replace{% else %}123456:ABC-DEF...{% endif %}"
+          autocomplete="off"
+        >
+      </label>
+      <label>
+        Telegram chat ID
+        <input type="text" name="telegram_chat_id" value="{{ integration.telegram_chat_id or '' }}" placeholder="6862705647">
+      </label>
+      <label>Gmail filter (optional)<input type="text" name="gmail_query" value="{{ integration.gmail_query or '' }}" placeholder="is:unread"></label>
+      <label class="checkbox">
+        <input type="checkbox" name="automation_enabled" {% if integration.automation_enabled %}checked{% endif %}>
+        Enable automation
+      </label>
+      <button class="btn btn-primary" type="submit">Save settings</button>
+    </form>
+  </article>
+
+  <article class="panel">
+    <h2>Recent summaries</h2>
+    {% if recent_emails %}
+      <ul class="timeline">
+        {% for item in recent_emails %}
+        <li>
+          <strong>{{ item.subject }}</strong>
+          <p>{{ item.summary[:180] }}{% if item.summary|length > 180 %}...{% endif %}</p>
+          <small>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No summaries yet. Connect Gmail and enable automation.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="panel">
+  <h2>Activity</h2>
+  {% if activity %}
+    <ul class="activity-list">
+      {% for item in activity %}
+      <li class="{{ item.level }}">
+        <span>{{ item.created_at.strftime('%H:%M') }}</span>
+        <span>{{ item.message }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Activity will appear here once automation runs.</p>
+  {% endif %}
+</section>
+{% endblock %}
