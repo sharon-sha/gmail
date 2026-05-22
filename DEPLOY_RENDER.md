@@ -146,7 +146,9 @@ For production with paying users, upgrade to **Starter** ($7/mo web + $7/mo DB).
 | Problem | Fix |
 |---|---|
 | Build fails | Check Render logs → ensure `requirements.txt` installs |
-| `GROQ_API_KEY is required` | Add env var in Render dashboard |
+| `GROQ_API_KEY is required` | Add `GROQ_API_KEY` in Render Environment tab |
+| Exited with status 3 | Usually missing env vars or DB SSL — see fixes below |
+| Build OK but crash on start | Push latest code; Dockerfile now uses `$PORT` and runs `init_db.py` |
 | Gmail OAuth redirect mismatch | Update Google Cloud redirect URI to match Render URL exactly |
 | `Google OAuth credentials missing` | Set `GOOGLE_CREDENTIALS_JSON` env var |
 | Database connection error | Confirm `DATABASE_URL` is linked to PostgreSQL service |

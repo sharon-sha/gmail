@@ -1,0 +1,10 @@
+.venv
+__pycache__
+*.pyc
+.env
+.env.*
+mailbrief.db
+*.db
+token.json
+processed_messages.json
+.git

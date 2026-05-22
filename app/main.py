@@ -20,7 +20,12 @@ scheduler = BackgroundScheduler()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    init_db()
+    try:
+        init_db()
+    except Exception:
+        logger.exception("Database initialization failed")
+        raise
+
     scheduler.add_job(
         run_worker_cycle,
         "interval",

@@ -11,9 +11,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 def _normalize_database_url(url: str) -> str:
     if url.startswith("postgres://"):
-        return url.replace("postgres://", "postgresql+psycopg2://", 1)
-    if url.startswith("postgresql://") and "+psycopg2" not in url:
-        return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+        url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif url.startswith("postgresql://") and "+psycopg2" not in url:
+        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+    if "sslmode=" not in url and ("render.com" in url or "neon.tech" in url):
+        url += "&sslmode=require" if "?" in url else "?sslmode=require"
+
     return url
 
 

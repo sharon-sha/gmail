@@ -1,20 +1,21 @@
 services:
   - type: web
     name: mailbrief
-    runtime: python
+    runtime: docker
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: bash scripts/render_start.sh
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.12.0"
       - key: ENV
         value: production
       - key: APP_NAME
         value: MailBrief
       - key: SECRET_KEY
         generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_CREDENTIALS_JSON
+        sync: false
       - key: GROQ_MODEL
         value: llama-3.3-70b-versatile
       - key: POLL_INTERVAL_SECONDS
