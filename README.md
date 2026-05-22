@@ -127,3 +127,4 @@ Legacy CLI (`python main.py`) still uses `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT
 ## n8n workflow
 
 Original n8n export: `n8n/gmail-trigger-workflow.json`
+# gmail
